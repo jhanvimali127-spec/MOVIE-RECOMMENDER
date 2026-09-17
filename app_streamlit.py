@@ -175,6 +175,17 @@ def recommend_movies(movie_title, number_of_movies=12):
         if index == movie_index:
             continue
 
+        # Recommend only movies that have a usable poster path.
+        poster_path = df.loc[index, "poster_path"]
+        if pd.isna(poster_path):
+            continue
+
+        poster_path = str(poster_path).strip()
+        if poster_path == "" or poster_path.lower() in [
+            "nan", "none", "null", "0"
+        ]:
+            continue
+
         recommendations.append({
             "index": index,
             "score": similarity_scores[index]
@@ -492,7 +503,14 @@ else:
 
     # Show popular movies from the local dataset
     popular_movies = (
-        df.sort_values(
+        df[
+            df["poster_path"].notna()
+            & (df["poster_path"].astype(str).str.strip() != "")
+            & (~df["poster_path"].astype(str).str.lower().isin(
+                ["nan", "none", "null", "0"]
+            ))
+        ]
+        .sort_values(
             by="popularity",
             ascending=False
         )
