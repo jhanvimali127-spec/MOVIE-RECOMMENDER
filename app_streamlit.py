@@ -57,7 +57,7 @@ st.markdown("""
 # ============================================================
 @st.cache_data
 def load_data():
-    df = pd.read_csv("movies_metadata.csv", low_memory=False)
+    df = pd.read_csv("movies_metadata_cleaned_ws.csv", low_memory=False)
 
     # Keep only useful columns if they exist
     required = [
