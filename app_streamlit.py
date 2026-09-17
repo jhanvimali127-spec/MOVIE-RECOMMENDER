@@ -3,9 +3,10 @@ import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+
 import ast
 import re
-
+import requests
 # ============================================================
 # PAGE CONFIG
 # ============================================================
@@ -208,19 +209,101 @@ def recommend_movies(movie_title, number_of_movies=12):
 #     return f"https://image.tmdb.org/t/p/w500{path}"
 
 
+# def poster_url(poster_path):
+#     if poster_path is None:
+#         return None
+
+
+#     poster_path = str(poster_path).strip()
+
+#     if poster_path == "" or poster_path.lower() == "nan" or poster_path == "0":
+#         return None
+
+#     if not poster_path.startswith("/"):
+#         poster_path = "/" + poster_path
+
+#     return f"https://image.tmdb.org/t/p/w500{poster_path}"
+
+
+# ============================================================
+# POSTER URL
+# ============================================================
+
 def poster_url(poster_path):
     if poster_path is None:
         return None
 
     poster_path = str(poster_path).strip()
 
-    if poster_path == "" or poster_path.lower() == "nan" or poster_path == "0":
+    if poster_path == "" or poster_path.lower() in [
+        "nan", "none", "null", "0"
+    ]:
         return None
+
+    if poster_path.startswith("http://") or poster_path.startswith("https://"):
+        return poster_path
 
     if not poster_path.startswith("/"):
         poster_path = "/" + poster_path
 
     return f"https://image.tmdb.org/t/p/w500{poster_path}"
+
+
+@st.cache_data(ttl=86400, show_spinner=False)
+def load_poster_image(url):
+    if not url:
+        return None
+
+    try:
+        response = requests.get(
+            url,
+            timeout=8,
+            headers={
+                "User-Agent": "Mozilla/5.0"
+            }
+        )
+
+        if response.status_code == 200 and response.content:
+            content_type = response.headers.get(
+                "content-type", ""
+            ).lower()
+
+            if content_type.startswith("image/"):
+                return response.content
+
+    except requests.RequestException:
+        pass
+
+    return None
+
+
+def show_poster(poster_path):
+    url = poster_url(poster_path)
+
+    image_bytes = load_poster_image(url)
+
+    if image_bytes:
+        st.image(
+            image_bytes,
+            use_container_width=True
+        )
+    else:
+        st.markdown(
+            """
+            <div style="
+                height:260px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                background:#f1f3f5;
+                border-radius:10px;
+                font-size:42px;
+            ">
+                🎞️
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 
 # ============================================================
@@ -234,13 +317,16 @@ def show_movie_details(movie):
 
     left, right = st.columns([1, 2])
 
-    with left:
-        poster = poster_url(movie.get("poster_path"))
+    # with left:
+    #     poster = poster_url(movie.get("poster_path"))
 
-        if poster:
-            st.image(poster, use_container_width=True)
-        else:
-            st.info("Poster not available")
+    #     if poster:
+    #         st.image(poster, use_container_width=True)
+    #     else:
+    #         st.info("Poster not available")
+    
+    with left:
+        show_poster(movie.get("poster_path"))
 
     with right:
 
@@ -280,15 +366,18 @@ def movie_grid(movies, columns=6):
     cols = st.columns(columns)
 
     for i, (_, movie) in enumerate(movies.iterrows()):
-
+        
         with cols[i % columns]:
+            show_poster(movie.get("poster_path"))
 
-            poster = poster_url(movie.get("poster_path"))
+        # with cols[i % columns]:
 
-            if poster:
-                st.image(poster, use_container_width=True)
-            else:
-                st.markdown("🎞️")
+        #     poster = poster_url(movie.get("poster_path"))
+
+        #     if poster:
+        #         st.image(poster, use_container_width=True)
+        #     else:
+        #         st.markdown("🎞️")
 
             st.markdown(
                 f"<div class='movie-title'>{movie['title']}</div>",
