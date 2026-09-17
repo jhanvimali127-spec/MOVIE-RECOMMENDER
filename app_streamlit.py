@@ -196,16 +196,31 @@ def recommend_movies(movie_title, number_of_movies=12):
 # ============================================================
 # POSTER URL
 # ============================================================
-def poster_url(path):
-    if not path or str(path).lower() == "nan":
+# def poster_url(path):
+#     if not path or str(path).lower() == "nan":
+#         return None
+
+#     path = str(path)
+
+#     if path.startswith("http"):
+#         return path
+
+#     return f"https://image.tmdb.org/t/p/w500{path}"
+
+
+def poster_url(poster_path):
+    if poster_path is None:
         return None
 
-    path = str(path)
+    poster_path = str(poster_path).strip()
 
-    if path.startswith("http"):
-        return path
+    if poster_path == "" or poster_path.lower() == "nan" or poster_path == "0":
+        return None
 
-    return f"https://image.tmdb.org/t/p/w500{path}"
+    if not poster_path.startswith("/"):
+        poster_path = "/" + poster_path
+
+    return f"https://image.tmdb.org/t/p/w500{poster_path}"
 
 
 # ============================================================
