@@ -223,7 +223,7 @@ def show_movie_details(movie):
         poster = poster_url(movie.get("poster_path"))
 
         if poster:
-            st.image(poster, use_column_width=True)
+            st.image(poster, use_container_width=True)
         else:
             st.info("Poster not available")
 
@@ -271,7 +271,7 @@ def movie_grid(movies, columns=6):
             poster = poster_url(movie.get("poster_path"))
 
             if poster:
-                st.image(poster, use_column_width=True)
+                st.image(poster, use_container_width=True)
             else:
                 st.markdown("🎞️")
 
